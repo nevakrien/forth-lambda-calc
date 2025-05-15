@@ -8,12 +8,6 @@
 : ndrop ( n -- )
   0 DO DROP LOOP ;
 
-: skip-call ( x compile-func -- func-output x )
-    { x }
-    parse-name evaluate 
-    x
-; immediate
-
 : safe-pick { idx -- n }
 
     idx CONS-SAFE-TAG = 
