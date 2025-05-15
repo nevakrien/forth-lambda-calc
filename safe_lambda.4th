@@ -8,14 +8,58 @@
 : ndrop ( n -- )
   0 DO DROP LOOP ;
 
+: skip-call ( x compile-func -- func-output x )
+    { x }
+    parse-name evaluate 
+    x
+; immediate
 
-: size-in-safe ( n -- n )    
-    { idx }
+: safe-word-name ( idx -- caddr u ) 
+    
+    pick { tag }
+
+    tag CONS-SAFE-TAG = if 
+       s" CONS" 
+       exit
+    then
+
+    tag NIL-SAFE-TAG = if 
+        s" NIL"
+        exit
+    then
+
+    tag 1-WORD-SAFE-TAG = if
+        s" 1-WORD"
+        exit
+    then
+
+    tag STR-SAFE-TAG = if
+        s" STR"
+        exit
+    then
+
+    tag N-WORDS-SAFE-TAG = if
+        s" N-WORDS"
+        exit
+    then
+
+    tag LAMBDA-SAFE-TAG = if 
+        s" LAMBDA"
+        exit
+    then
+
+    cr ." ERROR: safe method called on non safe value" cr 
+    abort
+;
+
+: print-safe-word ( idx -- ) safe-word-name type ;
+
+: size-in-safe { idx -- n }
 
     idx pick { tag }
 
     tag CONS-SAFE-TAG = if 
-        idx 1 - pick
+        idx 1 + pick
         exit
     then
 
@@ -47,17 +91,36 @@
     cr ." ERROR: safe method called on non safe value" cr 
     abort
 ;
-: size-safe ( n -- n )  size-in-safe 1 + ;
-
-
+: size-safe ( idx -- n )  size-in-safe 1 + ;
 : drop-safe ( safe-word -- ) 0 size-safe ndrop ;
 
-: get-safe ( n -- safe-word )
-    { spot }
-    spot size-safe
+: get-safe { idx -- safe-word }
+    idx size-safe
 
-    dup spot + 1 -
+    dup idx + 1 -
     { p }
 
     0 DO p pick LOOP
+;
+
+: cons-safe ( safe-word safe-word -- safe-word )
+    0 size-safe { idx }
+    idx size-safe
+    
+    idx + 1 +
+
+    CONS-SAFE-TAG
+;
+
+: stable-get-safe { idx -- idx safe-word }
+    idx get-safe
+    0 size-safe idx +
+;
+
+: stable-drop-safe ( safe-word idx -- idx )
+    { idx }
+
+    0 size-safe
+    dup ndrop
+    idx swap -
 ;
