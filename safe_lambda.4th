@@ -52,11 +52,29 @@
     abort
 ;
 
+: safe-pick { idx -- n }
+
+    idx CONS-SAFE-TAG = 
+    idx NIL-SAFE-TAG = OR
+    idx 1-WORD-SAFE-TAG = OR
+    idx STR-SAFE-TAG = OR
+    idx N-WORDS-SAFE-TAG = OR
+    idx LAMBDA-SAFE-TAG = OR 
+    
+    if 
+       cr ." ERROR: called pick with value instead of an index " cr 
+       abort
+    then
+
+    
+    idx pick 
+;
+
 : print-safe-word ( idx -- ) safe-word-name type ;
 
 : size-in-safe { idx -- n }
 
-    idx pick { tag }
+    idx safe-pick { tag }
 
     tag CONS-SAFE-TAG = if 
         idx 1 + pick
@@ -103,6 +121,16 @@
     0 DO p pick LOOP
 ;
 
+: 1-word-safe { x -- safe-word }
+    x 1-WORD-SAFE-TAG 
+;
+
+: str-safe { caddr u -- safe-word }
+    caddr u STR-SAFE-TAG 
+;  
+
+
+
 : cons-safe ( safe-word safe-word -- safe-word )
     0 size-safe { idx }
     idx size-safe
@@ -123,4 +151,9 @@
     0 size-safe
     dup ndrop
     idx swap -
+;
+
+: stable-cons-safe ( safe-word safe-word idx -- safe-word idx)
+    skip-call cons-safe
+    2 + 
 ;
